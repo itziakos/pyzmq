@@ -31,6 +31,8 @@ install:
   - cmd: pip install -r test-requirements.txt
   - ps: pip freeze
 
+  - ps: git clone
+
 build_script:
   - cmd: python setup.py build_ext -i --zmq=bundled
   - ps: pip install -e .
@@ -39,4 +41,4 @@ test_script:
   - ps: md temp
   - ps: cd temp
   - cmd: python -c "import zmq; print(zmq.zmq_version())"
-  - cmd: python -um haas -v pyzmq
+  - cmd: python -um haas -v zmq
