@@ -38,5 +38,5 @@ build_script:
 test_script:
   - ps: md temp
   - ps: cd temp
-  - cmd: python -c "import zmq; print(zmq.zmq_version())"'
+  - cmd: python -c "import zmq; print(zmq.zmq_version())"
   - cmd: python -um haas -v pyzmq
