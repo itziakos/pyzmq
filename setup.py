@@ -34,10 +34,10 @@ if any(bdist in sys.argv for bdist in ['bdist_wheel', 'bdist_egg']):
     import setuptools
 
 import distutils
-from distutils.core import setup, Command
+from setuptools import setup, Command
 from distutils.ccompiler import get_default_compiler
 from distutils.ccompiler import new_compiler
-from distutils.extension import Extension
+from setuptools import Extension
 from distutils.command.build_ext import build_ext
 from distutils.command.sdist import sdist
 from distutils.version import LooseVersion as V
