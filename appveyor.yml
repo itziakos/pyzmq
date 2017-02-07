@@ -32,7 +32,7 @@ install:
   - ps: pip freeze
 
 build_script:
-  - cmd: python setup.py build_ext --inplace --zmq=$ZMQ
+  - cmd: python setup.py build_ext --inplace --zmq=bandled
   - ps: pip install -e .
 
 test_script:
