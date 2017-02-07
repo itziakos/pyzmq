@@ -1,83 +1,43 @@
-# mostly copied from
+shallow_clone: false
+skip_branch_with_pr: true
+clone_depth: 1
+
 environment:
   global:
-    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
-    # /E:ON and /V:ON options are not enabled in the batch script intepreter
-    # See: http://stackoverflow.com/a/13751649/163740
-    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\tools\\run_with_env.cmd"
 
   matrix:
-    - PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.x"
-      PYTHON_ARCH: 32
-    - PYTHON: "C:\\Python36-x64"
-      PYTHON_VERSION: "3.6.x"
-      PYTHON_ARCH: 64
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.x"
-      PYTHON_ARCH: 32
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.x"
-      PYTHON_ARCH: 64
-    - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: 32
-    - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: 64
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.x"
-      PYTHON_ARCH: 32
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.x"
-      PYTHON_ARCH: 64
+    - python: "C:/Python27-x64"
+    - python: "C:/Python27"
+    - python: "C:/Python34-x64"
+    - python: "C:/Python34"
+    - python: "C:/Python35-x64"
+    - python: "C:/Python35"
+    - python: "C:/Python36-x64"
+    - python: "C:/Python36"
+
 matrix:
   fast_finish: true
 
+cache:
+  - C:\Users\appveyor\AppData\Local\pip\Cache
+
+init:
+  - ps: $Env:path = $Env:python + ";" + $Env:python + "\scripts;" + $Env:path
 install:
-  # If there is a newer build queued for the same PR, cancel this one.
-  # The AppVeyor 'rollout builds' option is supposed to serve the same
-  # purpose but it is problematic because it tends to cancel builds pushed
-  # directly to master instead of just PR builds (or the converse).
-  # credits: JuliaLang developers.
-  - ECHO "Filesystem root:"
-  - ps: "ls \"C:/\""
+  - ps: pip install --upgrade pip wheel
+  - ps: pip --version
+  - python -c "import struct; print(struct.calcsize('P') * 8)"
 
-  - ECHO "Installed SDKs:"
-  - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
-
-  # Prepend newly installed Python to the PATH of this build (this cannot be
-  # done from inside the powershell script as it would require to restart
-  # the parent CMD process).
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-
-  # Check that we have the expected version and architecture for Python
-  - "python --version"
-  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-
-  # Upgrade to the latest version of pip to avoid it displaying warnings
-  # about it being out of date.
-  - "%CMD_IN_ENV% pip install --disable-pip-version-check --user --upgrade pip setuptools wheel cython -r test-requirements.txt"
+  - ps: pip install coverage haas cython
+  - ps: pip install -r test-requirements
+  - ps: pip freeze
 
 build_script:
-  # Build the compiled extension
-  - "%CMD_IN_ENV% python setup.py bdist_wheel --zmq=bundled"
-  - ps: "ls dist"
-  - forfiles /p dist /m *.whl /c "cmd /c pip install @path"
+  - ps: python setup.py build_ext --inplace --zmq=$ZMQ
+  - ps: pip install -e .
 
 test_script:
-  # Run the project tests
-  - ps: cmd /c 'cd dist & python -c "import zmq; print(zmq.zmq_version())"'
-  - ps: cmd /c 'cd dist & python -m pytest -vsx --pyargs zmq.tests.test_socket'
-
-after_test:
-  # If tests are successful, create binary packages for the project.
-  - ps: "ls dist"
-
-artifacts:
-  # Archive the generated packages in the ci.appveyor.com build report.
-  - path: dist\*
-
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#
+  - ps: md temp
+  - ps: cd temp
+  - cmd: python -c "import zmq; print(zmq.zmq_version())"'
+  - cmd: python -um haas pyzmq
