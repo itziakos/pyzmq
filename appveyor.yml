@@ -3,7 +3,6 @@ skip_branch_with_pr: true
 clone_depth: 1
 
 environment:
-  global:
 
   matrix:
     - python: "C:/Python27-x64"
@@ -40,4 +39,4 @@ test_script:
   - ps: md temp
   - ps: cd temp
   - cmd: python -c "import zmq; print(zmq.zmq_version())"'
-  - cmd: python -um haas pyzmq
+  - cmd: python -um haas -v pyzmq
