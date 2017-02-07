@@ -28,7 +28,7 @@ install:
   - python -c "import struct; print(struct.calcsize('P') * 8)"
 
   - ps: pip install coverage haas cython
-  - ps: pip install -r test-requirements
+  - cmd: pip install -r test-requirements.txt
   - ps: pip freeze
 
 build_script:
