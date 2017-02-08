@@ -8,6 +8,7 @@ environment:
     - python: "C:/Python27-x64"
     - python: "C:/Python27"
     - python: "C:/Python34-x64"
+      distutils_use_sdk: "1"
     - python: "C:/Python34"
     - python: "C:/Python35-x64"
     - python: "C:/Python35"
@@ -15,7 +16,6 @@ environment:
     - python: "C:/Python36"
 
 matrix:
-  fast_finish: true
 
 cache:
   - C:\Users\appveyor\AppData\Local\pip\Cache
@@ -32,7 +32,7 @@ install:
   - ps: pip freeze
 
 build_script:
-  - cmd: python setup.py build_ext -i --zmq=bundled
+  - ps: ./tools/build.cmd python setup.py build_ext -i --zmq=bundled
   - ps: pip install -e .
 
 test_script:
