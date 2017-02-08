@@ -10,12 +10,14 @@ environment:
     - python: "C:/Python34-x64"
       distutils_use_sdk: "1"
     - python: "C:/Python34"
+      distutils_use_sdk: "1"
     - python: "C:/Python35-x64"
     - python: "C:/Python35"
     - python: "C:/Python36-x64"
     - python: "C:/Python36"
 
 matrix:
+  - fast_finish: true
 
 cache:
   - C:\Users\appveyor\AppData\Local\pip\Cache
