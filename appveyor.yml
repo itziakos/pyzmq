@@ -16,9 +16,6 @@ environment:
     - python: "C:/Python36-x64"
     - python: "C:/Python36"
 
-matrix:
-  - fast_finish: true
-
 cache:
   - C:\Users\appveyor\AppData\Local\pip\Cache
 
