@@ -31,7 +31,7 @@ install:
   - ps: pip freeze
 
 build_script:
-  - ps: ./tools/build.cmd python setup.py build_ext -i --zmq=bundled
+  - cmd: ./tools/build.cmd python setup.py build_ext -i --zmq=bundled
   - ps: pip install -e .
 
 test_script:
