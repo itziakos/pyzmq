@@ -26,7 +26,7 @@ install:
   - ps: pip --version
   - python -c "import struct; print(struct.calcsize('P') * 8)"
 
-  - ps: pip install coverage haas cython
+  - ps: pip install coverage cython
   - cmd: pip install -r test-requirements.txt
   - ps: pip freeze
 
@@ -38,4 +38,4 @@ test_script:
   - ps: md temp
   - ps: cd temp
   - cmd: python -c "import zmq; print(zmq.zmq_version())"
-  - cmd: python -um haas -v zmq.tests.test_auth
+  - cmd: python -um pytest -v
