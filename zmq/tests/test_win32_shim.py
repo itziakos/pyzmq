@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import time
 
 from functools import wraps
 from zmq.tests import BaseZMQTestCase
@@ -21,6 +22,7 @@ def count_calls(f):
 class TestWindowsConsoleControlHandler(BaseZMQTestCase):
 
     def test_handler(self):
+
         @count_calls
         def interrupt_polling():
             print('Caught CTRL-C!')
@@ -36,16 +38,20 @@ class TestWindowsConsoleControlHandler(BaseZMQTestCase):
             GenerateConsoleCtrlEvent.argtypes = (DWORD, DWORD)
             GenerateConsoleCtrlEvent.restype = BOOL
 
+            # Simulate CTRL-C event while handler is active.
             try:
-                # Simulate CTRL-C event while handler is active.
-                with allow_interrupt(interrupt_polling):
+                with allow_interrupt(interrupt_polling) as context:
                     result = GenerateConsoleCtrlEvent(0, 0)
-                    if result == 0:
-                        raise WindowsError
+                    # Sleep so that we give time to the handler to
+                    # capture the Ctrl-C event.
+                    time.sleep(0.5)
             except KeyboardInterrupt:
                 pass
             else:
-                self.fail('Expecting `KeyboardInterrupt` exception!')
+                if result == 0:
+                    raise WindowsError()
+                else:
+                    self.fail('Expecting `KeyboardInterrupt` exception!')
 
             # Make sure our handler was called.
             self.assertEqual(interrupt_polling.__calls__, 1)
