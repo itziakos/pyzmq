@@ -73,7 +73,7 @@ test_script:
   # Run the project tests
   - cmd: cd dist
   - cmd: python -c "import zmq; print(zmq.zmq_version())"
-  - cmd: python -um pytest -vsx --pyargs zmq
+  - cmd: python -um pytest -v --pyargs zmq
 
 after_test:
   # If tests are successful, create binary packages for the project.
