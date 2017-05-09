@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf8 -*-
 # Copyright (C) PyZMQ Developers
 # Distributed under the terms of the Modified BSD License.
 
