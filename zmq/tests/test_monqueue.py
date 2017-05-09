@@ -1,8 +1,8 @@
 # Copyright (C) PyZMQ Developers
 # Distributed under the terms of the Modified BSD License.
+
 import time
 from unittest import TestCase
-import sys
 
 from pytest import mark
 import zmq
@@ -165,9 +165,6 @@ class TestMonitoredQueue(BaseZMQTestCase):
         self.assertEqual([b'out']+bobs, mons)
         self.teardown_device()
 
-    @mark.skipif(
-        sys.platform.startswith('win'),
-         reason='Skipped for now')
     def test_router_router(self):
         """test router-router MQ devices"""
         dev = devices.ThreadMonitoredQueue(zmq.ROUTER, zmq.ROUTER, zmq.PUB, b'in', b'out')
