@@ -1,8 +1,8 @@
 # Copyright (C) PyZMQ Developers
 # Distributed under the terms of the Modified BSD License.
-
 import time
 from unittest import TestCase
+import sys
 
 from pytest import mark
 import zmq
