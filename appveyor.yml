@@ -24,6 +24,7 @@ install:
 
   - ps: pip install coverage cython
   - cmd: pip install -r test-requirements.txt
+  - cmd: pip install pytest-timeout
   - ps: pip freeze
 
 build_script:
@@ -34,4 +35,4 @@ test_script:
   - ps: md temp
   - ps: cd temp
   - cmd: python -c "import zmq; print(zmq.zmq_version())"
-  - ps: pytest -v --pyargs zmq
+  - ps: pytest -v --pyargs zmq --timeout=200
