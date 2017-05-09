@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # Copyright (C) PyZMQ Developers
 # Distributed under the terms of the Modified BSD License.
 
@@ -26,11 +26,6 @@ on_travis = bool(os.environ.get('TRAVIS_PYTHON_VERSION'))
 POLL_TIMEOUT = 1000 if windows else 100
 
 class TestSocket(BaseZMQTestCase):
-
-
-    def tearDown(self):
-        print('Called')
-        BaseZMQTestCase.tearDown(self)
 
     def test_create(self):
         ctx = self.Context()
