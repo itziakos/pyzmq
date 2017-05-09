@@ -27,6 +27,11 @@ POLL_TIMEOUT = 1000 if windows else 100
 
 class TestSocket(BaseZMQTestCase):
 
+
+    def tearDown(self):
+        print('Called')
+        BaseZMQTestCase.tearDown(self)
+
     def test_create(self):
         ctx = self.Context()
         s = ctx.socket(zmq.PUB)
@@ -107,7 +112,7 @@ class TestSocket(BaseZMQTestCase):
         s.setsockopt_unicode(zmq.SUBSCRIBE, topic)
         self.assertRaises(TypeError, s.getsockopt_unicode, zmq.AFFINITY)
         self.assertRaisesErrno(zmq.EINVAL, s.getsockopt_unicode, zmq.SUBSCRIBE)
-
+        print('HERE')
         identb = s.getsockopt(zmq.IDENTITY)
         identu = identb.decode('utf16')
         identu2 = s.getsockopt_unicode(zmq.IDENTITY, 'utf16')
