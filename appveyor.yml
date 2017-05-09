@@ -34,4 +34,4 @@ test_script:
   - ps: md temp
   - ps: cd temp
   - cmd: python -c "import zmq; print(zmq.zmq_version())"
-  - ps: python -um pytest -v --pyargs zmq
+  - ps: pytest -v --pyargs zmq
