@@ -1,4 +1,4 @@
-@echo off
+@ECHO OFF
 :: To build extensions for 64 bit Python 3, we need to configure environment
 :: variables to use the MSVC 2010 C++ compilers from GRMSDKX_EN_DVD.iso of:
 :: MS Windows SDK for Windows 7 and .NET Framework 4
@@ -20,5 +20,12 @@ IF "%DISTUTILS_USE_SDK%"=="1" (
     ECHO Using default MSVC build environment
 )
 
-CALL %*
+CALL %* || GOTO error
 ENDLOCAL
+@ECHO.DONE
+EXIT
+
+:error:
+ENDLOCAL
+@ECHO.ERROR
+EXIT /b %ERRORLEVEL%
