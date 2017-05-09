@@ -94,7 +94,7 @@ class TestSocket(BaseZMQTestCase):
 
     def test_unicode_sockopts(self):
         """test setting/getting sockopts with unicode strings"""
-        topic = u"tést"
+        topic = "tést"
         if str is not unicode:
             topic = topic.decode('utf8')
         p,s = self.create_bound_pair(zmq.PUB, zmq.SUB)
