@@ -27,8 +27,8 @@ install:
   - ps: pip freeze
 
 build_script:
-  - cmd: ./tools/build.cmd python setup.py build_ext -i --zmq=bundled
-  - ps: pip install -e .
+  - cmd: ./tools/build.cmd python setup.py build_wheel --zmq=bundled
+  - ps: forfiles /p dist /m *.whl /c "cmd /c pip install @path"
 
 test_script:
   - ps: md temp
