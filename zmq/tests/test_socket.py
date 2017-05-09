@@ -195,7 +195,7 @@ class TestSocket(BaseZMQTestCase):
         "test sending unicode objects"
         a,b = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
         self.sockets.extend([a,b])
-        u = "Γ§ΟΒ§"
+        u = "çπ§"
         if str is not unicode:
             u = u.decode('utf8')
         self.assertRaises(TypeError, a.send, u,copy=False)
