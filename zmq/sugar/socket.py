@@ -148,7 +148,18 @@ class Socket(SocketBase, AttributeSetter):
                 self.set(zmq.UNSUBSCRIBE, value)
             return
         super(Socket, self).__setattr__(key, value)
-    
+
+    def fileno(self):
+        """Return edge-triggered file descriptor for this socket.
+
+        This is a read-only edge-triggered file descriptor for both read and write events on this socket.
+        It is important that all available events be consumed when an event is detected,
+        otherwise the read event will not trigger again.
+
+        .. versionadded:: 17.0
+        """
+        return self.FD
+
     def subscribe(self, topic):
         """Subscribe to a topic
 
@@ -417,6 +428,47 @@ class Socket(SocketBase, AttributeSetter):
 
         """
         return load(recvd)
+
+    def send_serialized(self, msg, serialize, flags=0, copy=True):
+        """Send a message with a custom serialization function.
+
+        .. versionadded:: 17
+
+        Parameters
+        ----------
+        msg : The message to be sent. Can be any object serializable by `serialize`.
+        serialize : callable
+            The serialization function to use.
+            serialize(msg) should return an iterable of sendable message frames
+            (e.g. bytes objects), which will be passed to send_multipart.
+        flags : int, optional
+            Any valid send flag.
+        copy : bool, optional
+            Whether to copy the frames.
+
+        """
+        frames = serialize(msg)
+        return self.send_multipart(frames, flags=flags, copy=copy)
+
+    def recv_serialized(self, deserialize, flags=0, copy=True):
+        """Receive a message with a custom deserialization function.
+
+        .. versionadded:: 17
+
+        Parameters
+        ----------
+        deserialize : callable
+            The deserialization function to use.
+            deserialize will be called with one argument: the list of frames
+            returned by recv_multipart() and can return any object.
+        flags : int, optional
+            Any valid send flag.
+        copy : bool, optional
+            Whether to recv bytes or Frame objects.
+
+        """
+        frames = self.recv_multipart(flags=flags, copy=copy)
+        return self._deserialize(frames, deserialize)
 
     def send_string(self, u, flags=0, copy=True, encoding='utf-8'):
         """send a Python unicode string as a message with an encoding

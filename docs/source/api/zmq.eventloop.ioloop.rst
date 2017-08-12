@@ -1,4 +1,3 @@
-.. AUTO-GENERATED FILE -- DO NOT EDIT!
 
 eventloop.ioloop
 ================
@@ -12,34 +11,12 @@ Module: :mod:`eventloop.ioloop`
 Classes
 -------
 
-:class:`DelayedCallback`
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-.. autoclass:: DelayedCallback
-  :members:
-  :undoc-members:
-  :inherited-members:
-
 
 :class:`ZMQIOLoop`
 ~~~~~~~~~~~~~~~~~~
 
 
 .. autoclass:: ZMQIOLoop
-  :members:
-  :undoc-members:
-  :inherited-members:
-
-
-:class:`ZMQPoller`
-~~~~~~~~~~~~~~~~~~
-
-
-.. autoclass:: ZMQPoller
-  :members:
-  :undoc-members:
-  :inherited-members:
 
 
 Function

@@ -2,6 +2,7 @@
 # Copyright (c) PyZMQ Developers
 # Distributed under the terms of the Modified BSD License.
 
+import json
 import os
 import sys
 
@@ -164,6 +165,63 @@ class TestAsyncIOSocket(BaseZMQTestCase):
             self.assertEqual(recvd, obj)
         self.loop.run_until_complete(test())
 
+
+    def test_custom_serialize(self):
+        def serialize(msg):
+            frames = []
+            frames.extend(msg.get('identities', []))
+            content = json.dumps(msg['content']).encode('utf8')
+            frames.append(content)
+            return frames
+
+        def deserialize(frames):
+            identities = frames[:-1]
+            content = json.loads(frames[-1].decode('utf8'))
+            return {
+                'identities': identities,
+                'content': content,
+            }
+
+        @asyncio.coroutine
+        def test():
+            a, b = self.create_bound_pair(zmq.DEALER, zmq.ROUTER)
+
+            msg = {
+                'content': {
+                    'a': 5,
+                    'b': 'bee',
+                }
+            }
+            yield from a.send_serialized(msg, serialize)
+            recvd = yield from b.recv_serialized(deserialize)
+            assert recvd['content'] == msg['content']
+            assert recvd['identities']
+            # bounce back, tests identities
+            yield from b.send_serialized(recvd, serialize)
+            r2 = yield from a.recv_serialized(deserialize)
+            assert r2['content'] == msg['content']
+            assert not r2['identities']
+        self.loop.run_until_complete(test())
+
+    def test_custom_serialize_error(self):
+        @asyncio.coroutine
+        def test():
+            a, b = self.create_bound_pair(zmq.DEALER, zmq.ROUTER)
+
+            msg = {
+                'content': {
+                    'a': 5,
+                    'b': 'bee',
+                }
+            }
+            with pytest.raises(TypeError):
+                yield from a.send_serialized(json, json.dumps)
+
+            yield from a.send(b'not json')
+            with pytest.raises(TypeError):
+                recvd = yield from b.recv_serialized(json.loads)
+        self.loop.run_until_complete(test())
+
     def test_recv_dontwait(self):
         @asyncio.coroutine
         def test():
@@ -202,19 +260,42 @@ class TestAsyncIOSocket(BaseZMQTestCase):
             f = b.poll(timeout=0)
             yield from asyncio.sleep(0)
             self.assertEqual(f.result(), 0)
-        
+
             f = b.poll(timeout=1)
             assert not f.done()
             evt = yield from f
-            
+
             self.assertEqual(evt, 0)
-        
+
             f = b.poll(timeout=1000)
             assert not f.done()
             yield from a.send_multipart([b'hi', b'there'])
             evt = yield from f
             self.assertEqual(evt, zmq.POLLIN)
             recvd = yield from b.recv_multipart()
+            self.assertEqual(recvd, [b'hi', b'there'])
+        self.loop.run_until_complete(test())
+
+    def test_poll_base_socket(self):
+        @asyncio.coroutine
+        def test():
+            ctx = zmq.Context()
+            url = 'inproc://test'
+            a = ctx.socket(zmq.PUSH)
+            b = ctx.socket(zmq.PULL)
+            self.sockets.extend([a, b])
+            a.bind(url)
+            b.connect(url)
+
+            poller = zaio.Poller()
+            poller.register(b, zmq.POLLIN)
+
+            f = poller.poll(timeout=1000)
+            assert not f.done()
+            a.send_multipart([b'hi', b'there'])
+            evt = yield from f
+            self.assertEqual(evt, [(b, zmq.POLLIN)])
+            recvd = b.recv_multipart()
             self.assertEqual(recvd, [b'hi', b'there'])
         self.loop.run_until_complete(test())
     
@@ -224,9 +305,7 @@ class TestAsyncIOSocket(BaseZMQTestCase):
         except ImportError:
             raise SkipTest("Requires aiohttp")
         from aiohttp import web
-        
-        zmq.asyncio.install()
-        
+
         @asyncio.coroutine
         def echo(request):
             print(request.path)
@@ -289,6 +368,14 @@ class TestAsyncIOSocket(BaseZMQTestCase):
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(test())
+    
+    def test_shadow(self):
+        @asyncio.coroutine
+        def test():
+            ctx = zmq.Context()
+            s = ctx.socket(zmq.PULL)
+            async_s = zaio.Socket(s)
+            assert isinstance(async_s, self.socket_class)
 
 
 class TestAsyncioAuthentication(TestThreadAuthentication):

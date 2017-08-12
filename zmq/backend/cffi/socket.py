@@ -62,10 +62,13 @@ class Socket(object):
     _closed = None
     _ref = None
     _shadow = False
+    copy_threshold = 0
 
     def __init__(self, context=None, socket_type=None, shadow=None):
         self.context = context
         if shadow is not None:
+            if isinstance(shadow, Socket):
+                shadow = shadow.underlying
             self._zmq_socket = ffi.cast("void *", shadow)
             self._shadow = True
         else:

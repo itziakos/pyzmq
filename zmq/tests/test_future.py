@@ -5,13 +5,14 @@
 from datetime import timedelta
 import os
 import sys
+import json
 
 import pytest
 gen = pytest.importorskip('tornado.gen')
 
 import zmq
 from zmq.eventloop import future
-from zmq.eventloop.ioloop import IOLoop
+from tornado.ioloop import IOLoop
 from zmq.utils.strtypes import u
 
 from zmq.tests import BaseZMQTestCase
@@ -186,6 +187,62 @@ class TestFutureSocket(BaseZMQTestCase):
             self.assertEqual(recvd, obj)
         self.loop.run_sync(test)
 
+    def test_custom_serialize(self):
+        def serialize(msg):
+            frames = []
+            frames.extend(msg.get('identities', []))
+            content = json.dumps(msg['content']).encode('utf8')
+            frames.append(content)
+            return frames
+
+        def deserialize(frames):
+            identities = frames[:-1]
+            content = json.loads(frames[-1].decode('utf8'))
+            return {
+                'identities': identities,
+                'content': content,
+            }
+
+        @gen.coroutine
+        def test():
+            a, b = self.create_bound_pair(zmq.DEALER, zmq.ROUTER)
+
+            msg = {
+                'content': {
+                    'a': 5,
+                    'b': 'bee',
+                }
+            }
+            yield a.send_serialized(msg, serialize)
+            recvd = yield b.recv_serialized(deserialize)
+            assert recvd['content'] == msg['content']
+            assert recvd['identities']
+            # bounce back, tests identities
+            yield b.send_serialized(recvd, serialize)
+            r2 = yield a.recv_serialized(deserialize)
+            assert r2['content'] == msg['content']
+            assert not r2['identities']
+        self.loop.run_sync(test)
+
+    def test_custom_serialize_error(self):
+        @gen.coroutine
+        def test():
+            a, b = self.create_bound_pair(zmq.DEALER, zmq.ROUTER)
+
+            msg = {
+                'content': {
+                    'a': 5,
+                    'b': 'bee',
+                }
+            }
+            with pytest.raises(TypeError):
+                yield a.send_serialized(json, json.dumps)
+
+            yield a.send(b'not json')
+            with pytest.raises(TypeError):
+                recvd = yield b.recv_serialized(json.loads)
+        self.loop.run_sync(test)
+
     def test_poll(self):
         @gen.coroutine
         def test():
@@ -205,6 +262,32 @@ class TestFutureSocket(BaseZMQTestCase):
             self.assertEqual(evt, zmq.POLLIN)
             recvd = yield b.recv_multipart()
             self.assertEqual(recvd, [b'hi', b'there'])
+        self.loop.run_sync(test)
+
+    def test_poll_base_socket(self):
+        @gen.coroutine
+        def test():
+            ctx = zmq.Context()
+            url = 'inproc://test'
+            a = ctx.socket(zmq.PUSH)
+            b = ctx.socket(zmq.PULL)
+            self.sockets.extend([a, b])
+            a.bind(url)
+            b.connect(url)
+
+            poller = future.Poller()
+            poller.register(b, zmq.POLLIN)
+
+            f = poller.poll(timeout=1000)
+            assert not f.done()
+            a.send_multipart([b'hi', b'there'])
+            evt = yield f
+            self.assertEqual(evt, [(b, zmq.POLLIN)])
+            recvd = b.recv_multipart()
+            self.assertEqual(recvd, [b'hi', b'there'])
+            a.close()
+            b.close()
+            ctx.term()
         self.loop.run_sync(test)
 
     def test_close_all_fds(self):
