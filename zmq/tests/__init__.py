@@ -40,26 +40,26 @@ require_zmq_4 = mark.skipif(zmq.zmq_version_info() < (4,), reason="requires zmq 
 
 class BaseZMQTestCase(TestCase):
     green = False
-    
+
     @property
     def Context(self):
         if self.green:
             return gzmq.Context
         else:
             return zmq.Context
-    
+
     def socket(self, socket_type):
         s = self.context.socket(socket_type)
         self.sockets.append(s)
         return s
-    
+
     def setUp(self):
         super(BaseZMQTestCase, self).setUp()
         if self.green and not have_gevent:
                 raise SkipTest("requires gevent")
         self.context = self.Context.instance()
         self.sockets = []
-    
+
     def tearDown(self):
         contexts = set([self.context])
         while self.sockets:
@@ -67,6 +67,7 @@ class BaseZMQTestCase(TestCase):
             contexts.add(sock.context) # in case additional contexts are created
             sock.close(0)
         for ctx in contexts:
+            print(ctx)
             t = Thread(target=ctx.term)
             t.daemon = True
             t.start()
@@ -75,6 +76,7 @@ class BaseZMQTestCase(TestCase):
                 # reset Context.instance, so the failure to term doesn't corrupt subsequent tests
                 zmq.sugar.context.Context._instance = None
                 raise RuntimeError("context could not terminate, open sockets likely remain in test")
+            print(ctx)
         super(BaseZMQTestCase, self).tearDown()
 
     def create_bound_pair(self, type1=zmq.PAIR, type2=zmq.PAIR, interface='tcp://127.0.0.1'):
@@ -119,7 +121,7 @@ class BaseZMQTestCase(TestCase):
 got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
         else:
             self.fail("Function did not raise any error")
-    
+
     def _select_recv(self, multipart, socket, **kwargs):
         """call recv[_multipart] in a way that raises if there is nothing to receive"""
         if zmq.zmq_version_info() >= (3,1,0):
@@ -127,14 +129,14 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             # so we wait a little bit just in case
             # See LIBZMQ-280 on JIRA
             time.sleep(0.1)
-        
+
         r,w,x = zmq.select([socket], [], [], timeout=5)
         assert len(r) > 0, "Should have received a message"
         kwargs['flags'] = zmq.DONTWAIT | kwargs.get('flags', 0)
-        
+
         recv = socket.recv_multipart if multipart else socket.recv
         return recv(**kwargs)
-        
+
     def recv(self, socket, **kwargs):
         """call recv in a way that raises if there is nothing to receive"""
         return self._select_recv(False, socket, **kwargs)
@@ -142,7 +144,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
     def recv_multipart(self, socket, **kwargs):
         """call recv_multipart in a way that raises if there is nothing to receive"""
         return self._select_recv(True, socket, **kwargs)
-    
+
 
 class PollZMQTestCase(BaseZMQTestCase):
     pass
@@ -150,7 +152,7 @@ class PollZMQTestCase(BaseZMQTestCase):
 class GreenTest:
     """Mixin for making green versions of test classes"""
     green = True
-    
+
     def assertRaisesErrno(self, errno, func, *args, **kwargs):
         if errno == zmq.EAGAIN:
             raise SkipTest("Skipping because we're green.")
@@ -173,7 +175,7 @@ got '%s'" % (zmq.ZMQError(errno), zmq.ZMQError(e.errno)))
             gevent.joinall([gevent.spawn(ctx.term) for ctx in contexts], timeout=2, raise_error=True)
         except gevent.Timeout:
             raise RuntimeError("context could not terminate, open sockets likely remain in test")
-    
+
     def skip_green(self):
         raise SkipTest("Skipping because we are green")
 

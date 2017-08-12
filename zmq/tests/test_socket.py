@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 # Copyright (C) PyZMQ Developers
 # Distributed under the terms of the Modified BSD License.
 
@@ -20,7 +20,7 @@ from zmq.tests import (
 from zmq.utils.strtypes import unicode
 
 pypy = platform.python_implementation().lower() == 'pypy'
-windows = platform.platform().lower().startswith('windows')
+windows = sys.platform.startswith('win')
 on_travis = bool(os.environ.get('TRAVIS_PYTHON_VERSION'))
 
 # polling on windows is slow
@@ -37,7 +37,7 @@ class TestSocket(BaseZMQTestCase):
         self.assertRaisesErrno(zmq.EINVAL, s.bind, 'tcp://')
         s.close()
         del ctx
-    
+
     def test_context_manager(self):
         url = 'inproc://a'
         with self.Context() as ctx:
@@ -52,7 +52,7 @@ class TestSocket(BaseZMQTestCase):
                 self.assertEqual(b.closed, True)
             self.assertEqual(a.closed, True)
         self.assertEqual(ctx.closed, True)
-    
+
     def test_dir(self):
         ctx = self.Context()
         s = ctx.socket(zmq.PUB)
@@ -108,7 +108,7 @@ class TestSocket(BaseZMQTestCase):
         s.setsockopt_unicode(zmq.SUBSCRIBE, topic)
         self.assertRaises(TypeError, s.getsockopt_unicode, zmq.AFFINITY)
         self.assertRaisesErrno(zmq.EINVAL, s.getsockopt_unicode, zmq.SUBSCRIBE)
-        
+        print('HERE')
         identb = s.getsockopt(zmq.IDENTITY)
         identu = identb.decode('utf16')
         identu2 = s.getsockopt_unicode(zmq.IDENTITY, 'utf16')
@@ -118,7 +118,7 @@ class TestSocket(BaseZMQTestCase):
         p.send_unicode(topic*2, encoding='latin-1')
         self.assertEqual(topic, s.recv_unicode())
         self.assertEqual(topic*2, s.recv_unicode(encoding='latin-1'))
-    
+
     def test_int_sockopts(self):
         "test integer sockopts"
         v = zmq.zmq_version_info()
@@ -141,7 +141,7 @@ class TestSocket(BaseZMQTestCase):
         self.assertEqual(p.getsockopt(zmq.TYPE), zmq.PUB)
         self.assertEqual(s.getsockopt(zmq.TYPE), s.socket_type)
         self.assertEqual(s.getsockopt(zmq.TYPE), zmq.SUB)
-        
+
         # check for overflow / wrong type:
         errors = []
         backref = {}
@@ -171,7 +171,7 @@ class TestSocket(BaseZMQTestCase):
                                     " It is probably the wrong type."%sopt)
         if errors:
             self.fail('\n'.join([''] + errors))
-    
+
     def test_bad_sockopts(self):
         """Test that appropriate errors are raised on bad socket options"""
         s = self.context.socket(zmq.PUB)
@@ -184,14 +184,14 @@ class TestSocket(BaseZMQTestCase):
         self.assertRaises(TypeError, s.setsockopt, 9999, b"5")
         # some sockopts are valid in general, but not on every socket:
         self.assertRaisesErrno(zmq.EINVAL, s.setsockopt, zmq.SUBSCRIBE, b'hi')
-    
+
     def test_sockopt_roundtrip(self):
         "test set/getsockopt roundtrip."
         p = self.context.socket(zmq.PUB)
         self.sockets.append(p)
         p.setsockopt(zmq.LINGER, 11)
         self.assertEqual(p.getsockopt(zmq.LINGER), 11)
-    
+
     def test_send_unicode(self):
         "test sending unicode objects"
         a,b = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
@@ -208,7 +208,7 @@ class TestSocket(BaseZMQTestCase):
         a.send_unicode(u,encoding='utf16')
         s = b.recv_unicode(encoding='utf16')
         self.assertEqual(s,u)
-    
+
     def test_send_multipart_check_type(self):
         "check type on all frames in send_multipart"
         a,b = self.create_bound_pair(zmq.PAIR, zmq.PAIR)
@@ -217,7 +217,7 @@ class TestSocket(BaseZMQTestCase):
         a.send_multipart([b'b'])
         rcvd = self.recv_multipart(b)
         self.assertEqual(rcvd, [b'b'])
-    
+
     @skip_pypy
     def test_tracker(self):
         "test the MessageTracker object for tracking when zmq is done with a buffer"
@@ -299,7 +299,7 @@ class TestSocket(BaseZMQTestCase):
         self.assertRaisesErrno(zmq.ENOTSOCK, s.send, b'asdf')
         self.assertRaisesErrno(zmq.ENOTSOCK, s.recv)
         del ctx
-    
+
     def test_attr(self):
         """set setting/getting sockopts as attributes"""
         s = self.context.socket(zmq.DEALER)
@@ -309,7 +309,7 @@ class TestSocket(BaseZMQTestCase):
         self.assertEqual(linger, s.linger)
         self.assertEqual(linger, s.getsockopt(zmq.LINGER))
         self.assertEqual(s.fd, s.getsockopt(zmq.FD))
-    
+
     def test_bad_attr(self):
         s = self.context.socket(zmq.DEALER)
         self.sockets.append(s)
@@ -333,7 +333,7 @@ class TestSocket(BaseZMQTestCase):
             def __init__(self, *a, **kw):
                 self.a=-1
                 super(S, self).__init__(*a, **kw)
-        
+
         s = S(self.context, zmq.REP)
         self.sockets.append(s)
         self.assertEqual(s.a, -1)
@@ -341,7 +341,7 @@ class TestSocket(BaseZMQTestCase):
         self.assertEqual(s.a, 1)
         a=s.a
         self.assertEqual(a, 1)
-    
+
     def test_recv_multipart(self):
         a,b = self.create_bound_pair()
         msg = b'hi'
@@ -350,7 +350,7 @@ class TestSocket(BaseZMQTestCase):
         time.sleep(0.1)
         for i in range(3):
             self.assertEqual(self.recv_multipart(b), [msg])
-    
+
     def test_close_after_destroy(self):
         """s.close() after ctx.destroy() should be fine"""
         ctx = self.Context()
@@ -360,7 +360,7 @@ class TestSocket(BaseZMQTestCase):
         time.sleep(1e-2)
         s.close()
         self.assertTrue(s.closed)
-    
+
     def test_poll(self):
         a,b = self.create_bound_pair()
         tic = time.time()
@@ -376,12 +376,12 @@ class TestSocket(BaseZMQTestCase):
         evt = b.poll(POLL_TIMEOUT)
         self.assertEqual(evt, 0)
         self.assertEqual(msg2, msg)
-    
+
     def test_ipc_path_max_length(self):
         """IPC_PATH_MAX_LEN is a sensible value"""
         if zmq.IPC_PATH_MAX_LEN == 0:
             raise SkipTest("IPC_PATH_MAX_LEN undefined")
-        
+
         msg = "Surprising value for IPC_PATH_MAX_LEN: %s" % zmq.IPC_PATH_MAX_LEN
         self.assertTrue(zmq.IPC_PATH_MAX_LEN > 30, msg)
         self.assertTrue(zmq.IPC_PATH_MAX_LEN < 1025, msg)
@@ -389,14 +389,14 @@ class TestSocket(BaseZMQTestCase):
     def test_ipc_path_max_length_msg(self):
         if zmq.IPC_PATH_MAX_LEN == 0:
             raise SkipTest("IPC_PATH_MAX_LEN undefined")
-        
+
         s = self.context.socket(zmq.PUB)
         self.sockets.append(s)
         try:
             s.bind('ipc://{0}'.format('a' * (zmq.IPC_PATH_MAX_LEN + 1)))
         except zmq.ZMQError as e:
             self.assertTrue(str(zmq.IPC_PATH_MAX_LEN) in e.strerror)
-    
+
     def test_hwm(self):
         zmq3 = zmq.zmq_version_info()[0] >= 3
         for stype in (zmq.PUB, zmq.ROUTER, zmq.SUB, zmq.REQ, zmq.DEALER):
@@ -413,7 +413,7 @@ class TestSocket(BaseZMQTestCase):
                 except AttributeError:
                     pass
             s.close()
-    
+
     def test_copy(self):
         s = self.socket(zmq.PUB)
         scopy = copy.copy(s)
@@ -423,7 +423,7 @@ class TestSocket(BaseZMQTestCase):
         self.assertEqual(s.underlying, scopy.underlying)
         self.assertEqual(s.underlying, sdcopy.underlying)
         s.close()
-    
+
     def test_shadow(self):
         p = self.socket(zmq.PUSH)
         p.bind("tcp://127.0.0.1:5555")
@@ -438,13 +438,13 @@ class TestSocket(BaseZMQTestCase):
         p2.send(sent)
         rcvd = self.recv(s2)
         self.assertEqual(rcvd, sent)
-    
+
     def test_shadow_pyczmq(self):
         try:
             from pyczmq import zctx, zsocket
         except Exception:
             raise SkipTest("Requires pyczmq")
-        
+
         ctx = zctx.new()
         ca = zsocket.new(ctx, zmq.PUSH)
         cb = zsocket.new(ctx, zmq.PULL)
@@ -455,7 +455,7 @@ class TestSocket(BaseZMQTestCase):
         a.send(b'hi')
         rcvd = self.recv(b)
         self.assertEqual(rcvd, b'hi')
-    
+
     def test_subscribe_method(self):
         pub, sub = self.create_bound_pair(zmq.PUB, zmq.SUB)
         sub.subscribe('prefix')
@@ -476,7 +476,7 @@ class TestSocket(BaseZMQTestCase):
         pub.send(b'prefixmessage')
         events = p.poll(1000)
         self.assertEqual(events, [])
-    
+
     # Travis can't handle how much memory PyPy uses on this test
     @mark.skipif(
         (
@@ -534,11 +534,11 @@ class TestSocket(BaseZMQTestCase):
 
 if have_gevent and not windows:
     import gevent
-    
+
     class TestSocketGreen(GreenTest, TestSocket):
         test_bad_attr = GreenTest.skip_green
         test_close_after_destroy = GreenTest.skip_green
-        
+
         def test_timeout(self):
             a,b = self.create_bound_pair()
             g = gevent.spawn_later(0.5, lambda: a.send(b'hi'))
@@ -546,7 +546,7 @@ if have_gevent and not windows:
             timeout.start()
             self.assertRaises(gevent.Timeout, b.recv)
             g.kill()
-        
+
         @mark.skipif(not hasattr(zmq, 'RCVTIMEO'), reason="requires RCVTIMEO")
         def test_warn_set_timeo(self):
             s = self.context.socket(zmq.REQ)
@@ -555,7 +555,7 @@ if have_gevent and not windows:
             s.close()
             self.assertEqual(len(w), 1)
             self.assertEqual(w[0].category, UserWarning)
-            
+
 
         @mark.skipif(not hasattr(zmq, 'SNDTIMEO'), reason="requires SNDTIMEO")
         def test_warn_get_timeo(self):
